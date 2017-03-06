@@ -1,0 +1,79 @@
+---
+title: "Prelim analysis"
+author: "Chris Wilson"
+date: "February 11, 2017"
+output: html_document
+---
+  1. Row counts for data sets
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(xlsx)
+#deaths<-read.xlsx("deaths_raw.xlsx",1)
+deaths<-read.csv("data/deaths_cleaned.csv")
+nrow(deaths)
+#evict<-read.xlsx("evictions_raw.xlsx",1)
+evict<-read.csv("data/evictions_cleaned_geocoded.csv")
+nrow(evict)
+```
+  2. As a brief desciption of each characteristic:
+    i) The deaths data set was obtained from the King County Medical Examiner's Office and contains variables relating to deaths between 2015 and 2016.
+      + icase: unique identifier
+      + DOD: date of death
+      + Last name: Last name of descedent
+      + First name: First name of descedent
+      + MN: Middle name (if applicable) of descedent
+      + Sex: Sex of descedent
+      + Race: Race of descedent
+      + Hispanic: Boolean for hispanic as race
+      + Age: Age of descedent
+      + Place of Death: Street address for location of death
+      + City of Death: City of location of death
+      + Incident address: Presumed location of incident (if different from place of death)
+      + Primary cause of death: medical examiner's indicated primary cause of death
+      + Manner of death: Medical examiner's indicated presumed manner of death
+      + Lon: Longitudinal data for death
+      + Lat: Latitudinal data for death
+      + Site: Street address for death
+
+    ii) The eviction data was obtained from a records request from the city of Seattle contains two variables: the description of the evicted area and the date of the eviction action.
+      + isitename: Description of evicted area
+      + complete date: Date last eviction was completed
+
+3. Summary stats for both data sets.
+```{r cars}
+summary(deaths)
+summary(evict)
+```
+
+4. Histogram of core features:
+```{r}
+library(ggplot2)
+library(scales)
+#counter and cleanup for easy suming
+evict["count"]<-1
+evict$month <- as.Date(cut(evict$CompleteDate, breaks = "month"))
+deaths["count"]<-1
+deaths$month <- as.Date(cut(deaths$DOD, breaks = "month"))
+#coerce as dates for cleanup
+deaths$DOD<-as.Date(deaths$DOD,"%m/%d/%Y")
+#distribution of evictions over time
+ggplot(data=evict, aes(evict$month, evict$count)) + stat_summary(fun.y = sum, geom = "bar") + scale_x_date(labels = date_format("%Y-%m"))+labs(title = "Evictions By Month")
+#distribution of deaths over time
+ggplot(data=deaths, aes(deaths$month, deaths$count)) + stat_summary(fun.y = sum, geom = "bar") + scale_x_date(labels = date_format("%Y-%m"))+labs(title = "Deaths by Month")
+```
+
+5. Trends
+  i) At first glance both deaths and evictions do not appear to be affected by season, which was counterintuitive. 
+  ii) The most interesting work will start when I combine this data with the other datasets we collected (ie resources and weather), as well as some actuarial statistics we intend to use to compare deaths with population deaths later.
+
+6. Other Salient aspects
+  i) Jacob wrote a little python script that scrapes lon and lat data from google based on the addresses provided. We intend to use that information to map resources and deaths based on area.
+  ii) Despite being fairly messy, it's pretty powerful stuff. The only final cleanup step that wasn't completed on the initial pass is to turn the site description for the eviction into lon and lat coordinates for later analysis.
+
+7. Bullet list of to do tasks (excluding write up)
+  i) Complete final cleanup and geospatial data for evictions data
+  ii) Pull and reference actuarial data for deaths in the area to compare against homeless death demographics
+  iii) Learn how to do mapping in R and map our variables of interest to do geospatial analysis
+  iv) Show the mapped analysis month by month
+  v) Review correlations between deaths data (as our Y) against weather, services and evictions (as our X(s))
+
